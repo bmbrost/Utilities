@@ -8,10 +8,12 @@ violin <- function(z,xlab=NULL,ylab=NULL,ylim=NULL,yat=NULL,cex.axis=1,padj=0,
 	bw="SJ",smooth=1,violin.width=0.35,violin.col="gray75",x.buff=0.5,y.buff=0){
 
 	# browser()
-	
+
 	# Create violins
+	if(is.null(ncol(z))) z <- matrix(z,,1)		
 	n <- ncol(z)  # number of violins
 	den <- apply(z,2,function(x) density(x,bw=bw,adjust=smooth))  # kernel density
+	avg <- apply(z,2,mean) # means
 	poly <- lapply(den,function(x)  # rotate and close polygon to create violin
 		cbind(c(x$y,0-rev(x$y))/max(x$y)*violin.width,c(x$x,rev(x$x))))
 	poly <- sapply(1:n,function(x)  # adjust x-axis values
@@ -40,7 +42,6 @@ violin <- function(z,xlab=NULL,ylab=NULL,ylim=NULL,yat=NULL,cex.axis=1,padj=0,
 	lapply(poly,polygon,col=violin.col)	# plot violin
 
 	# Plot means
-	avg <- apply(z,2,mean) # means
 	points(1:n,avg,pch=19,col=1)  # polot means
 }
 
