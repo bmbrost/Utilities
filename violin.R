@@ -5,20 +5,29 @@
 # violin(z,ylab="This is only a test",xlab=c("Violin 1", "Violin 2", "Violin 3"))
 
 violin <- function(z,xlab=NULL,ylab=NULL,ylim=NULL,yat=NULL,cex.axis=1,padj=0,
-	bw="SJ",smooth=1,violin.width=0.35,violin.col="gray75",x.buff=0.5,y.buff=0){
+	bw="SJ",smooth=1,violin.width=0.35,violin.col="gray75",pt.cex=1,x.buff=0.5,y.buff=0,
+	quant=c(0,1)){
 
 	# browser()
+	if(is.null(ncol(z))) z <- matrix(z,,1)			
+	avg <- apply(z,2,mean) # posterior means
 
 	# Create violins
-	if(is.null(ncol(z))) z <- matrix(z,,1)		
 	n <- ncol(z)  # number of violins
 	den <- apply(z,2,function(x) density(x,bw=bw,adjust=smooth))  # kernel density
-	avg <- apply(z,2,mean) # means
+
+	for(i in 1:n){  # truncate densities to some quantile
+		q.lim <- quantile(z[,i],quant)
+		idx <- which(den[[i]]$x<q.lim[1]|den[[i]]$x>q.lim[2])
+		den[[i]]$x <- den[[i]]$x[-idx]
+		den[[i]]$y <- den[[i]]$y[-idx]
+	}
+
 	poly <- lapply(den,function(x)  # rotate and close polygon to create violin
 		cbind(c(x$y,0-rev(x$y))/max(x$y)*violin.width,c(x$x,rev(x$x))))
 	poly <- sapply(1:n,function(x)  # adjust x-axis values
 		cbind(poly[[x]][,1]+x,poly[[x]][,2]),simplify=FALSE)
-
+		
 	# Determine plot axis limits
 	if(is.null(ylim)){
 		ylim <- range(unlist(lapply(poly,function(x) range(x[,2]))))+c(-y.buff,y.buff)
@@ -42,6 +51,6 @@ violin <- function(z,xlab=NULL,ylab=NULL,ylim=NULL,yat=NULL,cex.axis=1,padj=0,
 	lapply(poly,polygon,col=violin.col)	# plot violin
 
 	# Plot means
-	points(1:n,avg,pch=19,col=1)  # polot means
+	points(1:n,avg,pch=19,cex=pt.cex,col=1)  # polot means
 }
 
